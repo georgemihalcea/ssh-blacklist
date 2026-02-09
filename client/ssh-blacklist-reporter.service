@@ -1,0 +1,21 @@
+[Unit]
+Description=SSH Blacklist Reporter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/ssh-blacklist/client/venv/bin/python /opt/ssh-blacklist/client/reporter.py \
+    --log-file /var/log/auth.log \
+    --server http://YOUR_BLACKLIST_SERVER:5000 \
+    --interval 5
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

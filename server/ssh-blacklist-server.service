@@ -1,0 +1,31 @@
+[Unit]
+Description=SSH Blacklist Server
+After=network.target
+
+[Service]
+Type=simple
+User=ssh-blacklist
+Group=ssh-blacklist
+WorkingDirectory=/opt/ssh-blacklist/server
+ExecStart=/opt/ssh-blacklist/server/venv/bin/gunicorn \
+    --bind 0.0.0.0:5000 \
+    --workers 4 \
+    --access-logfile - \
+    app:app
+Environment=BLACKLIST_DB=/var/lib/ssh-blacklist/blacklist.db
+Restart=on-failure
+RestartSec=5
+
+# Create database directory if missing
+ExecStartPre=/bin/mkdir -p /var/lib/ssh-blacklist
+ExecStartPre=/bin/chown ssh-blacklist:ssh-blacklist /var/lib/ssh-blacklist
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/ssh-blacklist
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
