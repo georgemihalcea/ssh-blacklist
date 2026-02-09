@@ -50,9 +50,9 @@ Environment variables:
 
 - Tail-follows `/var/log/auth.log` starting from the **end** (ignores old entries)
 - Regex matches failed SSH password attempts in both traditional syslog and ISO 8601 timestamp formats:
-  - `Feb  9 20:09:17 web7 sshd[60062]: Failed password for root from 166.171.122.252 port 20758 ssh2`
-  - `Feb  9 20:13:07 web7 sshd[60489]: Failed password for invalid user admin from 166.171.122.252 port 32126 ssh2`
-  - `2026-02-09T19:42:21.499070+02:00 bmwzone sshd[61072]: Failed password for invalid user emmanuel from 20.193.141.133 port 18932 ssh2`
+  - `Feb  9 20:09:17 server1 sshd[60062]: Failed password for root from 166.171.122.252 port 20758 ssh2`
+  - `Feb  9 20:13:07 server2 sshd[60489]: Failed password for invalid user admin from 166.171.122.252 port 32126 ssh2`
+  - `2026-02-09T19:42:21.499070+02:00 server3 sshd[61072]: Failed password for invalid user emmanuel from 20.193.141.133 port 18932 ssh2`
 - Batches detected IPs every 5 seconds (configurable with `--interval`)
 - Handles log rotation (detects inode change)
 - Retries failed sends on next batch cycle
