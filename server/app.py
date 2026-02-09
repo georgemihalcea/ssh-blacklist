@@ -361,13 +361,14 @@ STATS_TEMPLATE = r"""<!DOCTYPE html>
 
 
 # ---------------------------------------------------------------------------
-# Startup
+# Startup - runs on both direct execution and gunicorn import
 # ---------------------------------------------------------------------------
 
+os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+init_db()
+load_blacklist()
+
 if __name__ == "__main__":
-    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
-    init_db()
-    load_blacklist()
     print(f"SSH Blacklist Server starting on {HOST}:{PORT}")
     print(f"Database: {DB_PATH}")
     print(f"Loaded {len(blacklist)} IPs from database")
