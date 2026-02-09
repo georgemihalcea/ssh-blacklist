@@ -6,7 +6,7 @@ import sqlite3
 import threading
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, Response
 
 app = Flask(__name__)
 
@@ -137,15 +137,8 @@ def report_ip():
     return jsonify({"status": "ok", "results": results})
 
 
-@app.route("/api/blacklist", methods=["GET"])
-def get_blacklist():
-    """Return the blacklist.
-
-    Query parameters:
-        days  - only return IPs reported within the last N days (optional)
-    """
-    days = request.args.get("days", type=int)
-
+def _blacklist_data(days=None):
+    """Fetch blacklist data, optionally filtered to the last N days."""
     if days is None:
         with blacklist_lock:
             data = [
@@ -153,22 +146,50 @@ def get_blacklist():
                 for ip, attempts in blacklist.items()
             ]
         data.sort(key=lambda x: x["attempts"], reverse=True)
-        return jsonify({"count": len(data), "blacklist": data})
+    else:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        conn = get_db()
+        rows = conn.execute(
+            """SELECT ip, COUNT(*) as attempts
+               FROM reports_log
+               WHERE reported_at >= ?
+               GROUP BY ip
+               ORDER BY attempts DESC""",
+            (cutoff,),
+        ).fetchall()
+        conn.close()
+        data = [{"ip": row["ip"], "attempts": row["attempts"]} for row in rows]
+    return data
 
-    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
-    conn = get_db()
-    rows = conn.execute(
-        """SELECT ip, COUNT(*) as attempts
-           FROM reports_log
-           WHERE reported_at >= ?
-           GROUP BY ip
-           ORDER BY attempts DESC""",
-        (cutoff,),
-    ).fetchall()
-    conn.close()
 
-    data = [{"ip": row["ip"], "attempts": row["attempts"]} for row in rows]
-    return jsonify({"count": len(data), "days": days, "blacklist": data})
+@app.route("/api/blacklist", methods=["GET"])
+@app.route("/api/blacklist/<int:days>", methods=["GET"])
+def get_blacklist(days=None):
+    """Return the blacklist as JSON.
+
+    Routes:
+        /api/blacklist       - all IPs
+        /api/blacklist/7     - IPs from the last 7 days
+    """
+    data = _blacklist_data(days)
+    result = {"count": len(data), "blacklist": data}
+    if days is not None:
+        result["days"] = days
+    return jsonify(result)
+
+
+@app.route("/api/blacklist/txt", methods=["GET"])
+@app.route("/api/blacklist/txt/<int:days>", methods=["GET"])
+def get_blacklist_txt(days=None):
+    """Return the blacklist as plain text, one IP per line.
+
+    Routes:
+        /api/blacklist/txt   - all IPs
+        /api/blacklist/txt/7 - IPs from the last 7 days
+    """
+    data = _blacklist_data(days)
+    text = "\n".join(entry["ip"] for entry in data) + "\n"
+    return Response(text, mimetype="text/plain")
 
 
 @app.route("/api/stats")

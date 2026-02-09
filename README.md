@@ -23,7 +23,10 @@ ssh-blacklist/
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/report` | POST | Report IPs — accepts `{"ip": "x.x.x.x"}` or `{"ips": [...]}` for batch |
-| `/api/blacklist` | GET | Get blacklist — optional `?days=N` for time filtering |
+| `/api/blacklist` | GET | Get blacklist as JSON |
+| `/api/blacklist/<days>` | GET | Get blacklist as JSON, filtered to the last N days |
+| `/api/blacklist/txt` | GET | Get blacklist as plain text (one IP per line) |
+| `/api/blacklist/txt/<days>` | GET | Get blacklist as plain text, filtered to the last N days |
 | `/api/stats` | GET | Statistics dashboard (HTML) — optional `?server=x.x.x.x` for per-server detail |
 
 ### Features
@@ -117,11 +120,17 @@ curl -X POST http://localhost:5000/api/report \
   -H "Content-Type: application/json" \
   -d '{"ip": "1.2.3.4"}'
 
-# Get the blacklist
+# Get the blacklist (JSON)
 curl http://localhost:5000/api/blacklist
 
-# Get blacklist for last 7 days
-curl http://localhost:5000/api/blacklist?days=7
+# Get blacklist for last 7 days (JSON)
+curl http://localhost:5000/api/blacklist/7
+
+# Get the blacklist as plain text (one IP per line)
+curl http://localhost:5000/api/blacklist/txt
+
+# Get blacklist for last 7 days as plain text
+curl http://localhost:5000/api/blacklist/txt/7
 
 # View statistics in a browser
 # Open http://localhost:5000/api/stats
